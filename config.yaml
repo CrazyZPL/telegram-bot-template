@@ -1,0 +1,3 @@
+bot:
+  bot_token: example
+  webhook_url: www.example.com
