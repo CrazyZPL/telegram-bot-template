@@ -1,4 +1,4 @@
-package utils
+package config
 
 import (
 	"io/ioutil"
@@ -8,7 +8,16 @@ import (
 )
 
 type Config struct {
-	Bot BotConfig
+	Bot   BotConfig
+	Mysql MysqlConfig
+}
+
+type MysqlConfig struct {
+	Username string `yaml:"username"`
+	Password string `yaml:"password"`
+	Host     string `yaml:"host"`
+	Port     string `yaml:"port"`
+	Database string `yaml:"database"`
 }
 
 type BotConfig struct {

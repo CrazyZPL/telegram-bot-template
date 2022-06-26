@@ -4,12 +4,24 @@ import (
 	"log"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"github.com/telegram-bot-template/utils"
+	"github.com/telegram-bot-template/pkg/config"
+	"github.com/telegram-bot-template/pkg/db"
+	"github.com/telegram-bot-template/pkg/db/ent"
 )
+
+type MyBot struct {
+	Bot         tgbotapi.BotAPI
+	MysqlClient *ent.Client
+}
 
 // ConnectMyBot is a function to connect to our telegram bot
 func ConnectMyBot(configPath string) {
-	config, err := utils.InitConfigFile(configPath)
+	config, err := config.InitConfigFile(configPath)
+	if err != nil {
+		log.Panic(err)
+	}
+
+	mysqlClient, err := db.InitMysqlClient(config.Mysql)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -20,32 +32,41 @@ func ConnectMyBot(configPath string) {
 	}
 
 	bot.Debug = true
-	updateConfig := tgbotapi.NewUpdate(0)
 
-	// Tell Telegram we should wait up to 30 seconds on each request for an
-	// update. This way we can get information just as quickly as making many
-	// frequent requests without having to send nearly as many.
+	myBot := MyBot{
+		Bot:         *bot,
+		MysqlClient: mysqlClient,
+	}
+
+	updateConfig := tgbotapi.NewUpdate(0)
 	updateConfig.Timeout = 30
 
-	// Start polling Telegram for updates.
 	updates := bot.GetUpdatesChan(updateConfig)
 
 	var newMessage tgbotapi.MessageConfig
 
-	// Let's go through each update that we're getting from Telegram.
 	for update := range updates {
-		// Telegram can send many types of updates depending on what your Bot
-		// is up to. We only want to look at messages for now, so we can
-		// discard any other updates.
-		if update.Message == nil {
+		if update.Message.IsCommand() {
+			myBot.WhenUpdateIsCommand(update, &newMessage)
+		} else if update.CallbackQuery != nil {
+			myBot.WhenUpdateIsCallbackQuery(update, &newMessage)
+		} else if update.Message != nil {
+			myBot.WhenUpdateIsMessage(update, &newMessage)
+		} else {
 			continue
 		}
 
 		if _, err := bot.Send(newMessage); err != nil {
-			// Note that panics are a bad way to handle errors. Telegram can
-			// have service outages or network errors, you should retry sending
-			// messages or more gracefully handle failures.
 			panic(err)
 		}
 	}
 }
+
+func (bot *MyBot) WhenUpdateIsMessage(update tgbotapi.Update, newMessage *tgbotapi.MessageConfig) {}
+
+func (bot *MyBot) WhenUpdateIsCommand(update tgbotapi.Update, newMessage *tgbotapi.MessageConfig) {}
+
+func (bot *MyBot) WhenUpdateIsCallbackQuery(update tgbotapi.Update, newMessage *tgbotapi.MessageConfig) {
+}
+
+func (bot *MyBot) WhenUpdateIsKeyWord(update tgbotapi.Update, newMessage *tgbotapi.MessageConfig) {}

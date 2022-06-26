@@ -1,3 +1,11 @@
 bot:
   bot_token: example
   webhook_url: www.example.com
+
+mysql:
+  username: root
+  password: password
+  port: 3306
+  host: 127.0.0.1
+  database: telegram_bot_template 
+
