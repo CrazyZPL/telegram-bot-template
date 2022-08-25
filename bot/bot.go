@@ -44,9 +44,8 @@ func ConnectMyBot(configPath string, needMySQL bool) {
 
 	updates := bot.GetUpdatesChan(updateConfig)
 
-	var newMessage tgbotapi.MessageConfig
-
 	for update := range updates {
+		var newMessage tgbotapi.MessageConfig
 		if update.Message.IsCommand() {
 			myBot.WhenUpdateIsCommand(update, &newMessage)
 		} else if update.CallbackQuery != nil {
