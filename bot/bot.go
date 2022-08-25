@@ -15,13 +15,8 @@ type MyBot struct {
 }
 
 // ConnectMyBot is a function to connect to our telegram bot
-func ConnectMyBot(configPath string) {
+func ConnectMyBot(configPath string, needMySQL bool) {
 	config, err := config.InitConfigFile(configPath)
-	if err != nil {
-		log.Panic(err)
-	}
-
-	mysqlClient, err := db.InitMysqlClient(config.Mysql)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -31,12 +26,18 @@ func ConnectMyBot(configPath string) {
 		panic(err)
 	}
 
-	bot.Debug = true
-
 	myBot := MyBot{
-		Bot:         *bot,
-		MysqlClient: mysqlClient,
+		Bot: *bot,
 	}
+
+	if needMySQL {
+		myBot.MysqlClient, err = db.InitMysqlClient(config.Mysql)
+		if err != nil {
+			log.Panic(err)
+		}
+	}
+
+	bot.Debug = true
 
 	updateConfig := tgbotapi.NewUpdate(0)
 	updateConfig.Timeout = 30
