@@ -17,6 +17,12 @@ func main() {
 				Value:   "",
 				Usage:   "The config file path of your program",
 			},
+			&cli.BoolFlag{
+				Name:    "need-mysql",
+				Aliases: []string{"nm"},
+				Value:   false,
+				Usage:   "The project need to user mysql or not.",
+			},
 		},
 		Commands: []*cli.Command{
 			{
@@ -29,7 +35,7 @@ func main() {
 					} else {
 						path = "config.yaml"
 					}
-					bot.ConnectMyBot(path)
+					bot.ConnectMyBot(path, c.Bool("need-mysql"))
 					return nil
 				},
 			},
