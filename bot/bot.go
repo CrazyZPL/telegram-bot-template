@@ -23,7 +23,7 @@ func ConnectMyBot(configPath string, needMySQL bool) {
 
 	bot, err := tgbotapi.NewBotAPI(config.Bot.BotToken)
 	if err != nil {
-		panic(err)
+		log.Panic(err)
 	}
 
 	myBot := MyBot{
@@ -46,14 +46,22 @@ func ConnectMyBot(configPath string, needMySQL bool) {
 
 	for update := range updates {
 		var newMessage tgbotapi.MessageConfig
+		var needSend bool
+		newMessage.ParseMode = "MarkdownV2"
 		if update.Message.IsCommand() {
-			myBot.WhenUpdateIsCommand(update, &newMessage)
+			needSend = myBot.WhenUpdateIsCommand(update, &newMessage)
 		} else if update.CallbackQuery != nil {
-			myBot.WhenUpdateIsCallbackQuery(update, &newMessage)
+			needSend = myBot.WhenUpdateIsCallbackQuery(update, &newMessage)
 		} else if update.Message != nil {
-			myBot.WhenUpdateIsMessage(update, &newMessage)
+			needSend = myBot.WhenUpdateIsMessage(update, &newMessage)
 		} else {
 			continue
+		}
+
+		if needSend {
+			if _, err := bot.Send(newMessage); err != nil {
+				log.Printf("Send message error: %v", err)
+			}
 		}
 
 		if _, err := bot.Send(newMessage); err != nil {
@@ -62,11 +70,18 @@ func ConnectMyBot(configPath string, needMySQL bool) {
 	}
 }
 
-func (bot *MyBot) WhenUpdateIsMessage(update tgbotapi.Update, newMessage *tgbotapi.MessageConfig) {}
-
-func (bot *MyBot) WhenUpdateIsCommand(update tgbotapi.Update, newMessage *tgbotapi.MessageConfig) {}
-
-func (bot *MyBot) WhenUpdateIsCallbackQuery(update tgbotapi.Update, newMessage *tgbotapi.MessageConfig) {
+func (bot *MyBot) WhenUpdateIsMessage(update tgbotapi.Update, newMessage *tgbotapi.MessageConfig) bool {
+	return false
 }
 
-func (bot *MyBot) WhenUpdateIsKeyWord(update tgbotapi.Update, newMessage *tgbotapi.MessageConfig) {}
+func (bot *MyBot) WhenUpdateIsCommand(update tgbotapi.Update, newMessage *tgbotapi.MessageConfig) bool {
+	return false
+}
+
+func (bot *MyBot) WhenUpdateIsCallbackQuery(update tgbotapi.Update, newMessage *tgbotapi.MessageConfig) bool {
+	return false
+}
+
+func (bot *MyBot) WhenUpdateIsKeyWord(update tgbotapi.Update, newMessage *tgbotapi.MessageConfig) bool {
+	return false
+}
